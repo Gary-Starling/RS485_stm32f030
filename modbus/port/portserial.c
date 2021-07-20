@@ -75,14 +75,14 @@ vMBPortSerialEnable( BOOL xRxEnable, BOOL xTxEnable )
 BOOL
 xMBPortSerialInit( UCHAR ucPORT, ULONG ulBaudRate, UCHAR ucDataBits, eMBParity eParity )
 {
-  huart2.Init.Mode = UART_MODE_TX_RX; // работаем на прием и передачу
-  huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE; // без контрол€ потока (у нас же rs485)
-  // сэмплинг, не могу нормально объ€снить, но это нужно дл€ защиты от шумов
+  huart2.Init.Mode = UART_MODE_TX_RX; 
+  huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE; 
+
   huart2.Init.OneBitSampling = UART_ONEBIT_SAMPLING_DISABLED;
   huart2.Init.OverSampling = UART_OVERSAMPLING_16;
-  // один стоп-бит
+
   huart2.Init.StopBits = UART_STOPBITS_1;
-  // без доп-фич
+
   huart2.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
   
   
@@ -91,39 +91,27 @@ xMBPortSerialInit( UCHAR ucPORT, ULONG ulBaudRate, UCHAR ucDataBits, eMBParity e
     huart2.Instance = USART2;
     break;
   default:
-    // вызовем ошибку, если выбрали не тот номер порта, хот€ это будет ошибкой портировани€, но хоть что-то
     return FALSE;
   }
   
   // скорость
   huart2.Init.BaudRate = ulBaudRate;
   
-  // размер слова
-  switch (ucDataBits) {
-  case 8:
-    huart2.Init.WordLength = UART_WORDLENGTH_8B;
-    break;
-  case 9:
-    huart2.Init.WordLength = UART_WORDLENGTH_9B;
-    break;
-  default:
-    // вызовем ошибку, если выбрали не тот номер порта, хот€ это будет ошибкой портировани€, но хоть что-то
-    return FALSE;
-  }
   
-  // настраиваем бит четности
   switch (eParity) {
   case MB_PAR_NONE:
     huart2.Init.Parity = UART_PARITY_NONE;
+   huart2.Init.WordLength = UART_WORDLENGTH_8B;
     break;
   case MB_PAR_EVEN:
     huart2.Init.Parity = UART_PARITY_EVEN;
+    huart2.Init.WordLength = UART_WORDLENGTH_9B;
     break;
   case MB_PAR_ODD:
     huart2.Init.Parity = UART_PARITY_ODD;
+    huart2.Init.WordLength = UART_WORDLENGTH_9B;
     break;
   default:
-    // вызовем ошибку, если выбрали не тот номер порта, хот€ это будет ошибкой портировани€, но хоть что-то
     return FALSE;
   }
   
@@ -148,7 +136,8 @@ xMBPortSerialGetByte( CHAR * pucByte )
   */
   *pucByte = (CHAR)huart2.Instance->RDR;
   
-  return TRUE;
+   return TRUE;
+
 }
 
 /* Create an interrupt handler for the transmit buffer empty interrupt
@@ -171,7 +160,7 @@ void prvvUARTTxReadyISR( void )
 */
 void prvvUARTRxISR( void )
 {
-  pxMBFrameCBByteReceived(  ); // 16.03
+  pxMBFrameCBByteReceived(  ); 
 }
 
 
