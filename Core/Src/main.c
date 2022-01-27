@@ -4,10 +4,6 @@
 #include "mb.h"
 #include "mbport.h"
 #include "stm32f0xx_hal_uart_ex.h"
-#include "Flash_EEPROM.h"
-#include "led.h"
-#include "Buttons_menu.h"
-#include "kty_81_110.h"
 
 
 
@@ -23,11 +19,15 @@ static void MX_GPIO_Init(void);
 static void MX_TIM17_Init(void);
 
 
+#define REG_INPUT_START 1
+#define REG_INPUT_NREGS 7
 
+#define  REG_HOLDING_START 1
+#define  REG_HOLDING_NREGS 6  
 
-extern USHORT  usRegInputStart;
-extern USHORT  usRegInputBuf[REG_INPUT_NREGS];
-extern USHORT  usRegHoldingStart;
+USHORT  usRegInputStart;
+USHORT  usRegInputBuf[REG_INPUT_NREGS];
+USHORT  usRegHoldingStart;
 
 static uint32_t lock_nesting_count = 0;
 
@@ -52,43 +52,24 @@ eMBErrorCode    eStatus;
 
 int main(void)
 {
-
+  
   SystemClock_Config();
   
   
   MX_GPIO_Init();
   MX_TIM17_Init();
-
-  
-  
   
   uint32_t UART_bod = 115200;
-  eMBMode UserModbusMode = MB_RTU;
-
+  eMBMode UserModbusMode = MB_RTU;      //or MB_ASCII
   eStatus = eMBInit( UserModbusMode, 0x01, 0, (ULONG)UART_bod, MB_PAR_NONE );
   eStatus = eMBEnable(  );
-  uart_error_global = 0;
-  
   
   
   while (1)
   {
     
-
-    
-
-    if(uart_error_global)
-    {
-      eStatus = eMBDisable(  );
-      eStatus = eMBInit( UserModbusMode, (UCHAR)SLAVE_ID, 0, (ULONG)UART_bod, MB_PAR_NONE );
-      eStatus = eMBEnable(  );
-      uart_error_global = 0;
-    }
-    else
+    if(eStatus == MB_ENOERR)
       eStatus = eMBPoll();
-    
-    
-    
     
   }
   
@@ -183,8 +164,51 @@ eMBErrorCode eMBRegInputCB( UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNRe
 eMBErrorCode eMBRegHoldingCB( UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNRegs, eMBRegisterMode eMode )
 {
   eMBErrorCode    eStatus = MB_ENOERR;
-  int             iRegIndex;
   
+  int iRegIndex;
+
+  
+  if( ( usAddress >= REG_HOLDING_START ) &&
+     ( usAddress + usNRegs <= REG_HOLDING_START + REG_HOLDING_NREGS ) )
+  {
+    usAddress++;
+    iRegIndex = ( int )( usAddress - usRegHoldingStart );
+    switch ( eMode )
+    {
+      
+    case MB_REG_READ:
+      while( usNRegs > 0 )
+      {
+        /*
+        *pucRegBuffer++ = ( UCHAR ) ( some_buff[iRegIndex] >> 8 );
+        *pucRegBuffer++ = ( UCHAR ) ( some_buff[iRegIndex] & 0xFF );
+        */
+        iRegIndex++;
+        usNRegs--;
+      }
+      break;
+      
+    case MB_REG_WRITE:
+      while( usNRegs > 0 )
+      {
+        /*
+        some_buff[iRegIndex] = *pucRegBuffer++ << 8;
+        some_buff[iRegIndex] |= *pucRegBuffer++;
+        */
+        
+        iRegIndex++;
+        usNRegs--;        
+      }
+      
+      break;
+    }
+    
+    
+  }
+  else
+  {
+    eStatus = MB_ENOREG;
+  }
   return eStatus;
 }
 
@@ -192,7 +216,7 @@ eMBErrorCode eMBRegHoldingCB( UCHAR * pucRegBuffer, USHORT usAddress, USHORT usN
 eMBErrorCode eMBRegCoilsCB( UCHAR * pucRegBuffer, USHORT usAddress, USHORT usNCoils, eMBRegisterMode eMode )
 {
   /*
-
+  
   */
   
   return MB_ENOREG;

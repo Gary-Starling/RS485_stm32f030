@@ -47,10 +47,10 @@ vMBPortSerialEnable( BOOL xRxEnable, BOOL xTxEnable )
   */
   if(xRxEnable)
   {
-    while( __HAL_UART_GET_FLAG(&huart2, UART_FLAG_TC) != SET)
-    {  
-    }
-     HAL_GPIO_WritePin(GPIOA, GPIO_PIN_12, GPIO_PIN_RESET);
+//    while( __HAL_UART_GET_FLAG(&huart2, UART_FLAG_TC) != SET)
+//    {  
+//    }
+//     HAL_GPIO_WritePin(GPIOA, GPIO_PIN_12, GPIO_PIN_RESET);
     __HAL_UART_ENABLE_IT(&huart2, UART_IT_RXNE);
    
   }
@@ -61,7 +61,7 @@ vMBPortSerialEnable( BOOL xRxEnable, BOOL xTxEnable )
   
   if(xTxEnable)
   {
-    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_12, GPIO_PIN_SET);
+//    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_12, GPIO_PIN_SET);
     __HAL_UART_ENABLE_IT(&huart2, UART_IT_TXE); 
     
   }
@@ -115,7 +115,9 @@ xMBPortSerialInit( UCHAR ucPORT, ULONG ulBaudRate, UCHAR ucDataBits, eMBParity e
     return FALSE;
   }
   
-  return HAL_UART_Init(&huart2) == HAL_OK ? TRUE : FALSE;
+  return HAL_RS485Ex_Init(&huart2, UART_DE_POLARITY_HIGH, 0, 0) == HAL_OK ? TRUE : FALSE;
+      
+  
 }
 
 BOOL
